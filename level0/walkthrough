@@ -20,17 +20,18 @@ su level1
 
 
 # ------------------------------------------------------------------------
-# Recreate the exploit
+# Recreate the exploitable binary
 # ------------------------------------------------------------------------
 
 # As user level1, compile the exploit in /tmp
 gcc source.c
 
-# Move the exploit to level1 home directory
-mv a.out ~
-
 # Edit suid
 chmod u+s a.out
+
+# Move the exploit to level1 home directory
+chmod +wx ~
+mv a.out ~
 
 # Now user level0 can run the exploit
 /home/user/level1/a.out 423

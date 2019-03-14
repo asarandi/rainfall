@@ -17,10 +17,10 @@ int			main(int argc, char **argv)
 	{
 		exec_args[0] = strdup(SHELL);
 		exec_args[1] = NULL;
-		egid = getegid();
-		euid = geteuid();
-		setresgid(egid, egid, egid);
-		setresuid(euid, euid, euid);
+		egid = getegid();             // unnecessary
+		euid = geteuid();             // unnecessary
+		setresgid(egid, egid, egid);  // unnecessary
+		setresuid(euid, euid, euid);  // unnecessary
 		execv(SHELL, exec_args);
 	}
 	else
