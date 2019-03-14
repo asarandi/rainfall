@@ -1,0 +1,37 @@
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# As user level0, run the given binary with argument: 423
+~/level0 423
+
+# This spawns a shell in which the user is level01
+
+# Read the password for user level1
+cat /home/user/level1/.pass
+
+# Terminate the shell
+exit
+
+# Now we can log in as user level1
+su level1
+# password: 1fe8a524fa4bec01ca4ea2a869af2a02260d4a7d5fe7e7c24d8617e6dca12d3a
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploit
+# ------------------------------------------------------------------------
+
+# As user level1, compile the exploit in /tmp
+gcc source.c
+
+# Move the exploit to level1 home directory
+mv a.out ~
+
+# Edit suid
+chmod u+s a.out
+
+# Now user level0 can run the exploit
+/home/user/level1/a.out 423
+
