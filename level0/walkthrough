@@ -6,6 +6,7 @@
 ~/level0 423
 
 # This spawns a shell in which the user is level01
+whoami
 
 # Read the password for user level1
 cat /home/user/level1/.pass
@@ -30,8 +31,7 @@ gcc source.c
 chmod u+s a.out
 
 # Move the exploit to level1 home directory
-chmod +wx ~
-mv a.out ~
+chmod +wx ~; mv a.out ~
 
 # Now user level0 can run the exploit
 /home/user/level1/a.out 423

@@ -17,8 +17,8 @@ int			main(int argc, char **argv)
 	{
 		exec_args[0] = strdup(SHELL);
 		exec_args[1] = NULL;
-		egid = getegid();             // unnecessary
-		euid = geteuid();             // unnecessary
+		egid = getegid();
+		euid = geteuid();
 		setresgid(egid, egid, egid);  // unnecessary
 		setresuid(euid, euid, euid);  // unnecessary
 		execv(SHELL, exec_args);

@@ -1,4 +1,4 @@
-gdb /home/user/level0/level0
+gdb /home/user/level1/level1
 
 set disassembly-flavor intel
 
