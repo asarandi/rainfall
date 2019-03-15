@@ -8,7 +8,7 @@ Dump of assembler code for function main:
    0x08048540 <+1>:	    mov    ebp,esp
    0x08048542 <+3>:	    and    esp,0xfffffff0
 
-   0x08048545 <+6>:	    call   0x80484d4 <p>
+   0x08048545 <+6>:	    call   0x80484d4 <p>              ; p()
 
    0x0804854a <+11>:	    leave  
    0x0804854b <+12>:	    ret    
@@ -29,10 +29,10 @@ Dump of assembler code for function p:
    0x080484ed <+25>:	    call   0x80483c0 <gets@plt>       ; gets(buffer)
 
    0x080484f2 <+30>:	    mov    eax,DWORD PTR [ebp+0x4]
-   0x080484f5 <+33>:	    mov    DWORD PTR [ebp-0xc],eax
+   0x080484f5 <+33>:	    mov    DWORD PTR [ebp-0xc],eax    ; ret_addr = __builtin_return_address(0)
    0x080484f8 <+36>:	    mov    eax,DWORD PTR [ebp-0xc]
    0x080484fb <+39>:	    and    eax,0xb0000000
-   0x08048500 <+44>:	    cmp    eax,0xb0000000
+   0x08048500 <+44>:	    cmp    eax,0xb0000000             ; (ret_addr & 0xb0000000) == 0xb0000000
    0x08048505 <+49>:	    jne    0x8048527 <p+83>
 
    0x08048507 <+51>:	    mov    eax,0x8048620

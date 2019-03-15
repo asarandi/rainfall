@@ -3,3 +3,5 @@
 *.pdf
 *.iso
 pdf.txt
+*.o
+shellcode.asm

