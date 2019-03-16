@@ -64,7 +64,7 @@ Dump of assembler code for function main:
    0x080485d8 <+183>:	mov    DWORD PTR [esp+0x8],eax
    0x080485dc <+187>:	mov    DWORD PTR [esp+0x4],0x44
    0x080485e4 <+195>:	mov    DWORD PTR [esp],0x8049960
-   0x080485eb <+202>:	call   0x80483c0 <fgets@plt>           ; fgets("", 68, file)
+   0x080485eb <+202>:	call   0x80483c0 <fgets@plt>           ; fgets(g_buffer, 68, file)
 
    0x080485f0 <+207>:	mov    DWORD PTR [esp],0x8048703
    0x080485f7 <+214>:	call   0x8048400 <puts@plt>            ; puts("~~")
@@ -89,7 +89,7 @@ Dump of assembler code for function m:
    0x0804850b <+23>:	mov    DWORD PTR [esp+0x8],eax
    0x0804850f <+27>:	mov    DWORD PTR [esp+0x4],0x8049960
    0x08048517 <+35>:	mov    DWORD PTR [esp],edx
-   0x0804851a <+38>:	call   0x80483b0 <printf@plt>           ; printf("%s - %d\n", "", t)
+   0x0804851a <+38>:	call   0x80483b0 <printf@plt>           ; printf("%s - %d\n", g_buffer, t)
    0x0804851f <+43>:	leave  
    0x08048520 <+44>:	ret    
 End of assembler dump.

