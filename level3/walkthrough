@@ -110,7 +110,7 @@ and thats our entire exploit:
     # Edit suid
     chmod u+s ft_level3
 
-    # Move the exploit to home directory
+    # Move the program to home directory
     chmod +wx ~; mv ft_level3 ~
 
 # As user level3:
