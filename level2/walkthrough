@@ -196,7 +196,7 @@ here is a convenient one-liner:
     # Edit suid
     chmod u+s ft_level2
 
-    # Move the exploit to home directory
+    # Move the program to home directory
     chmod +wx ~; mv ft_level2 ~
 
 # As user level2:
