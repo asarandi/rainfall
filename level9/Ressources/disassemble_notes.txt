@@ -1,0 +1,162 @@
+gdb /home/user/level9/level9
+
+set disassembly-flavor intel
+
+disas main
+Dump of assembler code for function main:
+   0x080485f4 <+0>:	   push   ebp
+   0x080485f5 <+1>:	   mov    ebp,esp
+   0x080485f7 <+3>:	   push   ebx
+   0x080485f8 <+4>:	   and    esp,0xfffffff0
+   0x080485fb <+7>:	   sub    esp,0x20
+
+   0x080485fe <+10>:    cmp    DWORD PTR [ebp+0x8],0x1
+   0x08048602 <+14>:    jg     0x8048610 <main+28>                  ; jump if argc > 1
+
+   0x08048604 <+16>:    mov    DWORD PTR [esp],0x1
+   0x0804860b <+23>:    call   0x80484f0 <_exit@plt>                ; _exit(1)
+
+   0x08048610 <+28>:    mov    DWORD PTR [esp],0x6c
+   0x08048617 <+35>:    call   0x8048530 <_Znwj@plt>                ; c++filt _Znwj => operator new(unsigned int)
+   0x0804861c <+40>:    mov    ebx,eax                              ; a = new(108)
+
+   0x0804861e <+42>:    mov    DWORD PTR [esp+0x4],0x5
+   0x08048626 <+50>:    mov    DWORD PTR [esp],ebx                  ; c++filt _ZN1NC2Ei => N::N(int)
+   0x08048629 <+53>:    call   0x80486f6 <_ZN1NC2Ei>                ; a = new N(5)
+
+   0x0804862e <+58>:    mov    DWORD PTR [esp+0x1c],ebx             ; [esp+0x1c] = a
+
+   0x08048632 <+62>:    mov    DWORD PTR [esp],0x6c
+   0x08048639 <+69>:    call   0x8048530 <_Znwj@plt>
+   0x0804863e <+74>:    mov    ebx,eax                              ; b = new(108)
+
+   0x08048640 <+76>:    mov    DWORD PTR [esp+0x4],0x6
+   0x08048648 <+84>:    mov    DWORD PTR [esp],ebx
+   0x0804864b <+87>:    call   0x80486f6 <_ZN1NC2Ei>                ; b = new N(6)
+
+   0x08048650 <+92>:    mov    DWORD PTR [esp+0x18],ebx             ; [esp+0x18] = b
+
+   0x08048654 <+96>:    mov    eax,DWORD PTR [esp+0x1c]
+   0x08048658 <+100>:	mov    DWORD PTR [esp+0x14],eax             ; [esp+0x14] = a
+   0x0804865c <+104>:	mov    eax,DWORD PTR [esp+0x18]
+   0x08048660 <+108>:	mov    DWORD PTR [esp+0x10],eax             ; [esp+0x10] = b
+   
+   0x08048664 <+112>:	mov    eax,DWORD PTR [ebp+0xc]
+   0x08048667 <+115>:	add    eax,0x4
+   0x0804866a <+118>:	mov    eax,DWORD PTR [eax]
+   0x0804866c <+120>:	mov    DWORD PTR [esp+0x4],eax              ; arg2 = argv[1]
+   0x08048670 <+124>:	mov    eax,DWORD PTR [esp+0x14]
+   0x08048674 <+128>:	mov    DWORD PTR [esp],eax                  ; arg1 = a
+   0x08048677 <+131>:	call   0x804870e <_ZN1N13setAnnotationEPc>  ; _ZN1N13setAnnotationEPc(a, argv[1])
+                                                                    ; c++filt _ZN1N13setAnnotationEPc => N::setAnnotation(char*)
+
+   0x0804867c <+136>:	mov    eax,DWORD PTR [esp+0x10]            ; eax = b
+   0x08048680 <+140>:	mov    eax,DWORD PTR [eax]                 ; eax = *eax
+   0x08048682 <+142>:	mov    edx,DWORD PTR [eax]                 ; method = b->method
+   
+   0x08048684 <+144>:	mov    eax,DWORD PTR [esp+0x14]            ; eax = a
+   0x08048688 <+148>:	mov    DWORD PTR [esp+0x4],eax              
+   0x0804868c <+152>:	mov    eax,DWORD PTR [esp+0x10]
+   0x08048690 <+156>:	mov    DWORD PTR [esp],eax
+   0x08048693 <+159>:	call   edx                                 ; method(b, a)
+
+   0x08048695 <+161>:	mov    ebx,DWORD PTR [ebp-0x4]
+   0x08048698 <+164>:	leave  
+   0x08048699 <+165>:	ret    
+End of assembler dump.
+
+
+
+disas _ZN1N13setAnnotationEPc
+Dump of assembler code for function _ZN1N13setAnnotationEPc:        ; N::setAnnotation(char *str)
+                                                                    ; setAnnotation(N, str)
+   0x0804870e <+0>:	   push   ebp
+   0x0804870f <+1>:	   mov    ebp,esp
+   0x08048711 <+3>:	   sub    esp,0x18
+
+   0x08048714 <+6>:	   mov    eax,DWORD PTR [ebp+0xc]
+   0x08048717 <+9>:	   mov    DWORD PTR [esp],eax
+   0x0804871a <+12>:	   call   0x8048520 <strlen@plt>               ; len = strlen(str)
+
+   0x0804871f <+17>:	   mov    edx,DWORD PTR [ebp+0x8]              ; this
+   0x08048722 <+20>:	   add    edx,0x4                              ; this->annotation
+   0x08048725 <+23>:	   mov    DWORD PTR [esp+0x8],eax
+   0x08048729 <+27>:	   mov    eax,DWORD PTR [ebp+0xc]
+   0x0804872c <+30>:	   mov    DWORD PTR [esp+0x4],eax
+   0x08048730 <+34>:	   mov    DWORD PTR [esp],edx
+   0x08048733 <+37>:	   call   0x8048510 <memcpy@plt>               ; memcpy(this->annotation, str, len)
+
+   0x08048738 <+42>:	   leave  
+   0x08048739 <+43>:	   ret    
+End of assembler dump.
+
+
+disas _ZN1NC2Ei
+Dump of assembler code for function _ZN1NC2Ei:                      ; N::N(int value)
+                                                                    ; N(this, value)
+   0x080486f6 <+0>:  push   ebp
+   0x080486f7 <+1>:  mov    ebp,esp
+
+   0x080486f9 <+3>:  mov    eax,DWORD PTR [ebp+0x8]
+   0x080486fc <+6>:  mov    DWORD PTR [eax],0x8048848
+   
+   0x08048702 <+12>: mov    eax,DWORD PTR [ebp+0x8]
+   0x08048705 <+15>: mov    edx,DWORD PTR [ebp+0xc]
+   0x08048708 <+18>: mov    DWORD PTR [eax+0x68],edx                ; this[0x68] = value
+
+   0x0804870b <+21>: pop    ebp
+   0x0804870c <+22>: ret    
+End of assembler dump.
+
+
+
+disas _ZN1NplERS_
+Dump of assembler code for function _ZN1NplERS_:                   ; operator+(N a, N b)
+                                                                   ; N::operator+(N&)
+   0x0804873a <+0>:  push   ebp
+   0x0804873b <+1>:  mov    ebp,esp
+
+   0x0804873d <+3>:  mov    eax,DWORD PTR [ebp+0x8]
+   0x08048740 <+6>:  mov    edx,DWORD PTR [eax+0x68]               ; a->value
+   0x08048743 <+9>:  mov    eax,DWORD PTR [ebp+0xc]
+   0x08048746 <+12>: mov    eax,DWORD PTR [eax+0x68]               ; b->value
+   0x08048749 <+15>: add    eax,edx                                ; return a->value + b->value
+
+   0x0804874b <+17>: pop    ebp
+   0x0804874c <+18>: ret    
+End of assembler dump.
+
+
+gdb$ disas _ZN1NmiERS_
+Dump of assembler code for function _ZN1NmiERS_:                  ; operator+(N a, N b)
+                                                                  ; N::operator-(N&)
+   0x0804874e <+0>:  push   ebp
+   0x0804874f <+1>:  mov    ebp,esp
+
+   0x08048751 <+3>:  mov    eax,DWORD PTR [ebp+0x8]
+   0x08048754 <+6>:  mov    edx,DWORD PTR [eax+0x68]              ; a->value
+   0x08048757 <+9>:  mov    eax,DWORD PTR [ebp+0xc]
+   0x0804875a <+12>: mov    eax,DWORD PTR [eax+0x68]              ; b->value
+   0x0804875d <+15>: mov    ecx,edx
+   0x0804875f <+17>: sub    ecx,eax
+   0x08048761 <+19>: mov    eax,ecx                               ; return a->value - b->value
+
+   0x08048763 <+21>: pop    ebp
+   0x08048764 <+22>: ret    
+End of assembler dump.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

