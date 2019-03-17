@@ -1,3 +1,7 @@
+# ------------------------------------------------------------------------
+# analysis
+# ------------------------------------------------------------------------
+
 the program reads the .pass file for next level into buffer B,
 argv[1] is required otherwise it exits
 then the program calls `atoi()' with argv[1] as a parameter and the resulting int is used as an index for buffer B,
@@ -11,6 +15,9 @@ when we do that `atoi()' returns 0, so the first byte of buffer B becomes a null
 since our argv[1] string also has a null first byte, `strcmp()' evaluates both strings as equal (they're both empty)
 and the program launches a shell:
 
+# ------------------------------------------------------------------------
+# getting the flag
+# ------------------------------------------------------------------------
 
     bonus3@RainFall:~$ ./bonus3 ''
     $ whoami
@@ -26,3 +33,47 @@ and the program launches a shell:
     $ cat /home/user/end/.pass
     3321b6f81659f9a71c76616f606e4b50189cecfea611393d5d649f75e157353c
     $
+
+# ------------------------------------------------------------------------
+# recreating the original program
+# ------------------------------------------------------------------------
+
+/* compile on rainfall vm: gcc -std=c99 source.c */
+
+#include <stdio.h>      /* fopen, fread, fclose */
+#include <unistd.h>     /* execl */
+#include <stdlib.h>     /* atoi */
+#include <string.h>     /* strcmp */
+
+#define pass_file "/home/user/end/.pass"
+
+int main(int argc, char **argv)
+{
+    int ret;
+    int k;
+    char buf[0x84];
+    FILE *fp = fopen(pass_file, "r");
+
+    for (int i=0; i<0x84; i++) {    /* clear buffer */
+        buf[i] = 0;
+    }
+
+    if ((!fp) || (argc != 2)) {
+        ret = -1;
+    } else {
+        fread(buf, 1, 0x42, fp);
+        buf[16] = 0;                /* 0x8048574 */
+        buf[atoi(argv[1])] = 0;
+        fread(&buf[0x42], 1, 0x41, fp);
+        fclose(fp);
+
+        if (strcmp(buf, argv[1]) == 0) {
+            execl("/bin/sh", "sh", 0);
+        } else {
+            puts(&buf[0x42]);
+        }
+
+        ret = 0;
+    }
+    return ret;
+}
