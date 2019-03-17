@@ -1,10 +1,15 @@
 the program reads the .pass file for next level into buffer B,
 argv[1] is required otherwise it exits
-then the program calls atoi() with argv[1] as a parameter and the resulting int is used as an index for buffer B, at that index the program inserts a null byte
+then the program calls `atoi()' with argv[1] as a parameter and the resulting int is used as an index for buffer B,
+at that index the program inserts a null byte
 
-afterwards the program compares buffer B to argv[1] via strcmp and if they match it executes /bin/sh
+afterwards the program compares buffer B to argv[1] string via `strcmp()' and if they match it executes `/bin/sh'
 
-seems like the only way to pass this level is to provide the program with a null byte or an empty string as an argv[1] parameter:
+seems like the only way to pass this level is to provide the program with a null byte (empty string) as an argv[1] parameter;
+when we do that `atoi()' returns 0, so the first byte of buffer B becomes a null byte,
+
+since our argv[1] string also has a null first byte, `strcmp()' evaluates both strings as equal (they're both empty)
+and the program launches a shell:
 
 
     bonus3@RainFall:~$ ./bonus3 ''
