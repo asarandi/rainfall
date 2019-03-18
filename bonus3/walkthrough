@@ -38,42 +38,20 @@ and the program launches a shell:
 # recreating the original program
 # ------------------------------------------------------------------------
 
-/* compile on rainfall vm: gcc -std=c99 source.c */
+# As user end:
 
-#include <stdio.h>      /* fopen, fread, fclose */
-#include <unistd.h>     /* execl */
-#include <stdlib.h>     /* atoi */
-#include <string.h>     /* strcmp */
+    # Compile the program in /tmp
+    gcc bonus3.c -o ft_bonus3
 
-#define pass_file "/home/user/end/.pass"
+    # Edit suid
+    chmod u+s ft_bonus3
 
-int main(int argc, char **argv)
-{
-    int ret;
-    int k;
-    char buf[0x84];
-    FILE *fp = fopen(pass_file, "r");
+    # Move the program to home directory
+    chmod +wx ~; mv ft_bonus3 ~
 
-    for (int i=0; i<0x84; i++) {    /* clear buffer */
-        buf[i] = 0;
-    }
+# As user bonus3:
 
-    if ((!fp) || (argc != 2)) {
-        ret = -1;
-    } else {
-        fread(buf, 1, 0x42, fp);
-        buf[16] = 0;                /* 0x8048574 */
-        buf[atoi(argv[1])] = 0;
-        fread(&buf[0x42], 1, 0x41, fp);
-        fclose(fp);
+    # Run the program
+    /home/user/end/ft_bonus3 ''
 
-        if (strcmp(buf, argv[1]) == 0) {
-            execl("/bin/sh", "sh", 0);
-        } else {
-            puts(&buf[0x42]);
-        }
 
-        ret = 0;
-    }
-    return ret;
-}

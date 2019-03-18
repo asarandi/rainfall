@@ -3,19 +3,14 @@
 #include <stdlib.h>     /* atoi */
 #include <string.h>     /* strcmp */
 
-// #define pass_file "/home/user/end/.pass"
-#define pass_file "flag"
+#define pass_file "/home/user/end/.pass"
 
 int main(int argc, char **argv)
 {
     int ret;
     int k;
-    char buf[0x84];
+    char buf[0x84] = {0};
     FILE *fp = fopen(pass_file, "r");
-
-    for (int i=0; i<0x84; i++) {    /* clear buffer */
-        buf[i] = 0;
-    }
 
     if ((!fp) || (argc != 2)) {
         ret = -1;
@@ -27,7 +22,7 @@ int main(int argc, char **argv)
         fclose(fp);
 
         if (strcmp(buf, argv[1]) == 0) {
-            execl("/bin/sh", "sh", 0);
+            execl("/bin/sh", "sh", NULL);
         } else {
             puts(&buf[0x42]);
         }
